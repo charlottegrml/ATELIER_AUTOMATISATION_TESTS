@@ -3,8 +3,8 @@ from flask import Flask
 app = Flask(__name__)
 
 @app.get("/")
-def hello():
-    return "Bonjour le monde ! (Flask on PythonAnywhere)"
+def consignes():
+     return render_template('consignes.html')
 
 if __name__ == "__main__":
     # utile en local uniquement
