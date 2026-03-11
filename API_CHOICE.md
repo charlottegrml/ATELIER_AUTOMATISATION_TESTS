@@ -31,7 +31,10 @@ Codes HTTP attendus :
 
 
 - Limites / rate limiting connu :
+
+
 La Frankfurter API est une API publique gratuite et ne nécessite pas de clé.
+
 La documentation ne mentionne pas de limite stricte de requêtes, mais comme toute API publique, il peut exister un rate limiting implicite si un trop grand nombre de requêtes est envoyé en peu de temps.
 
 
