@@ -52,3 +52,15 @@ Changements futurs dans le format de la réponse JSON.
 Limitation de requêtes si l’API détecte un usage trop intensif.
 
 Problèmes réseau pouvant provoquer des timeouts.
+
+
+
+
+EXEMPLE : 
+
+GET /latest?from=EUR
+
+<img width="853" height="809" alt="image" src="https://github.com/user-attachments/assets/b51d7d51-ece6-4a7f-8f80-ee79e8a35ede" />
+
+
+
