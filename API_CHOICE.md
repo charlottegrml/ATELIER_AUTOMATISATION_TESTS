@@ -10,7 +10,8 @@
   - GET /latest?from=EUR&to=USD ... https://api.frankfurter.app/latest?from=EUR&to=USD
  
 - Hypothèses de contrat (champs attendus, types, codes) :
-- 
+
+
 Lors de l’appel de l’API, la réponse est retournée au format JSON.
 Les champs principaux attendus sont :
 amount : nombre (float) correspondant au montant de base
@@ -22,7 +23,9 @@ rates : objet JSON contenant les taux de conversion vers d’autres devises
 Codes HTTP attendus :
 
 200 : requête réussie
+
 400 : paramètre incorrect (devise invalide par exemple)
+
 500 : erreur interne du serveur
 
 
@@ -34,10 +37,15 @@ La documentation ne mentionne pas de limite stricte de requêtes, mais comme tou
 
 - Risques (instabilité, downtime, CORS, etc.) :
 
+
 Les principaux risques possibles sont :
-Indisponibilité temporaire de l’API (downtime serveur)
-Latence variable selon la charge du serveur
-Changements futurs dans le format de la réponse JSON
-Limitation de requêtes si l’API détecte un usage trop intensif
-Problèmes réseau pouvant provoquer des timeouts
-Ces risques justifient la mise en place de tests automatiques, gestion des erreurs et retry dans le système de monitoring.
+
+Indisponibilité temporaire de l’API (downtime serveur).
+
+Latence variable selon la charge du serveur.
+
+Changements futurs dans le format de la réponse JSON.
+
+Limitation de requêtes si l’API détecte un usage trop intensif.
+
+Problèmes réseau pouvant provoquer des timeouts.
