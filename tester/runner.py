@@ -1,46 +1,68 @@
-from tester.tests import *
-import time
+import statistics
+from datetime import datetime
+from tester.tests import (
+    test_status_200,
+    test_content_type_json,
+    test_champ_base,
+    test_champ_rates,
+    test_champ_date,
+    test_conversion_eur_usd,
+    test_devise_invalide_404,
+    test_endpoint_inconnu_404,
+)
+
+ALL_TESTS = [
+    test_status_200,
+    test_content_type_json,
+    test_champ_base,
+    test_champ_rates,
+    test_champ_date,
+    test_conversion_eur_usd,
+    test_devise_invalide_404,
+    test_endpoint_inconnu_404,
+]
+
 
 def run_tests():
-
-    tests = [
-        ("status", test_status),
-        ("json", test_json),
-        ("base field", test_base_field),
-        ("rates field", test_rates_field),
-        ("date field", test_date_field),
-        ("rates type", test_rates_type)
-    ]
-
+    """
+    Exécute tous les tests et retourne un dict structuré
+    avec les résultats + métriques QoS.
+    """
     results = []
-
-    start = time.time()
-
-    for name, func in tests:
-
+    for test_fn in ALL_TESTS:
         try:
-            ok = func()
-            status = "PASS" if ok else "FAIL"
+            result = test_fn()
+        except Exception as e:
+            result = {
+                "name": test_fn.__name__,
+                "status": "FAIL",
+                "latency_ms": 0,
+                "details": f"Exception : {str(e)}"
+            }
+        results.append(result)
 
-        except:
-            status = "ERROR"
-
-        results.append({
-            "name": name,
-            "status": status
-        })
-
-    duration = (time.time() - start) * 1000
-
-    passed = len([r for r in results if r["status"] == "PASS"])
+    # ── Calcul des métriques ──────────────────
+    passed = sum(1 for r in results if r["status"] == "PASS")
     failed = len(results) - passed
+    total = len(results)
+    error_rate = round(failed / total, 3) if total > 0 else 0
+
+    latencies = [r["latency_ms"] for r in results if r.get("latency_ms")]
+    latency_avg = round(statistics.mean(latencies)) if latencies else 0
+    latency_p95 = round(
+        sorted(latencies)[int(len(latencies) * 0.95) - 1]
+    ) if len(latencies) >= 2 else (latencies[0] if latencies else 0)
+
+    availability = round((passed / total) * 100, 1) if total > 0 else 0
 
     return {
-        "summary": {
-            "passed": passed,
-            "failed": failed,
-            "latency_ms_avg": duration / len(results),
-            "error_rate": failed / len(results)
-        },
+        "api": "Frankfurter",
+        "timestamp": datetime.now().isoformat(),
+        "passed": passed,
+        "failed": failed,
+        "error_rate": error_rate,
+        "latency_ms_avg": latency_avg,
+        "latency_ms_p95": latency_p95,
+        "availability": availability,
         "tests": results
     }
