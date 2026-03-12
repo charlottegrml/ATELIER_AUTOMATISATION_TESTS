@@ -41,6 +41,14 @@ def dashboard():
         last_run=last_run
     )
 
+
+@app.route("/dashboard-json")
+def dashboard_json():
+
+    runs = list_runs()
+
+    return jsonify(runs)
+
 if __name__ == "__main__":
     # utile en local uniquement
     app.run(host="0.0.0.0", port=5000, debug=True)
