@@ -1,10 +1,6 @@
 from tester.client import call_api
 
 
-# ─────────────────────────────────────────────
-# A. Tests CONTRAT (fonctionnels)
-# ─────────────────────────────────────────────
-
 def test_status_200():
     """GET /latest retourne HTTP 200"""
     r = call_api("/latest", {"from": "EUR"})
