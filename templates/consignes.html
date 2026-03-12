@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Atelier — Automatisation des tests d’API publiques (Python/Flask + PythonAnywhere)</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root{
       --bg:#0b1020;
@@ -29,6 +30,23 @@
     }
     h1{margin:0 0 10px; font-size: clamp(22px, 3vw, 34px);}
     .subtitle{color:var(--muted); max-width:75ch;}
+
+    <div style="margin-top:18px;" class="row">
+    
+    <a href="/run">
+    <button>Lancer les tests API</button>
+    </a>
+    
+    <a href="/dashboard">
+    <button>Voir le dashboard</button>
+    </a>
+    
+    <a href="/health">
+    <button>État de santé</button>
+    </a>
+    
+    </div>
+    
     .container{max-width:1100px; margin:0 auto; padding:18px;}
     .grid{
       display:grid;
@@ -438,6 +456,13 @@ project/
   </div>
 </main>
 
+  <section class="card">
+  <h2>Visualisation QoS</h2>
+
+  <canvas id="latencyChart"></canvas>
+
+</section>
+
 <div class="footer">
   <div class="hr"></div>
   <div>
@@ -445,5 +470,43 @@ project/
     Prévoyez un mécanisme anti-spam (limite de runs) et un timeout strict (3–5s).</p>
   </div>
 </div>
+
+  <script>
+
+async function loadData(){
+
+    try{
+
+        const response = await fetch("/dashboard-json");
+        const data = await response.json();
+
+        const labels = data.map(r => r.timestamp);
+        const latency = data.map(r => r.latency_ms_avg);
+
+        const ctx = document.getElementById("latencyChart");
+
+        new Chart(ctx, {
+            type: "line",
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: "Latence moyenne (ms)",
+                    data: latency,
+                    tension: 0.3
+                }]
+            }
+        });
+
+    }catch(e){
+
+        console.log("Pas de données dashboard");
+
+    }
+
+}
+
+loadData();
+
+</script>
 </body>
 </html>
