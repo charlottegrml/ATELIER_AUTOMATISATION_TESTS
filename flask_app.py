@@ -33,7 +33,13 @@ def dashboard():
 
     runs = list_runs()
 
-    return render_template("dashboard.html", runs=runs)
+    last_run = runs[0] if runs else None
+
+    return render_template(
+        "dashboard.html",
+        runs=runs,
+        last_run=last_run
+    )
 
 if __name__ == "__main__":
     # utile en local uniquement
