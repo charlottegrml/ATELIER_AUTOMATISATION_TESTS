@@ -1,132 +1,241 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
-  <title>Dashboard Frankfurter API</title>
-
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Dashboard — Frankfurter API</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; margin: 30px; background: #f7f9fc; color: #222; }
-
-    h1, h2 { color: #1f3c88; }
-
+    :root {
+      --bg: #0b1020; --card: #121a33; --muted: #aab4d4;
+      --text: #e9edff; --accent: #77baff;
+      --ok: #62d6a0; --warn: #ffcc66; --bad: #ff6b7a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 600px at 10% 0%, #172257 0%, var(--bg) 60%);
+      color: var(--text); line-height: 1.5;
+    }
+    header { max-width: 1100px; margin: 0 auto; padding: 32px 18px 10px; }
+    h1 { margin: 0 0 8px; font-size: clamp(20px, 3vw, 32px); }
+    .nav { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+    .btn {
+      padding: 9px 18px; border-radius: 12px; border: 1px solid rgba(119,186,255,0.34);
+      background: rgba(119,186,255,0.18); color: var(--text);
+      font-weight: 600; font-size: 13px; cursor: pointer; text-decoration: none;
+    }
+    .btn:hover { filter: brightness(1.1); }
+    .container { max-width: 1100px; margin: 0 auto; padding: 18px; }
     .card {
-      background: white;
-      border-radius: 10px;
-      padding: 20px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+      border-radius: 16px; padding: 20px; margin-bottom: 18px;
     }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: white;
+    .card h2 { margin: 0 0 14px; font-size: 18px; }
+    .kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+    .kpi-box {
+      padding: 14px; border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.03); text-align: center;
     }
-
-    th, td {
-      padding: 10px;
-      border: 1px solid #ddd;
-      text-align: left;
+    .kpi-box .val { font-size: 26px; font-weight: 700; }
+    .kpi-box .lbl { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .ok  { color: var(--ok); }
+    .bad { color: var(--bad); }
+    .warn { color: var(--warn); }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.07); text-align: left; }
+    th { background: rgba(119,186,255,0.08); font-weight: 600; }
+    tr:last-child td { border-bottom: none; }
+    .pass { color: var(--ok); font-weight: bold; }
+    .fail { color: var(--bad); font-weight: bold; }
+    .badge {
+      display: inline-block; padding: 2px 10px; border-radius: 999px;
+      font-size: 12px; font-weight: 600;
     }
-
-    th { background: #eef3ff; }
-
-    .pass { color: green; font-weight: bold; }
-    .fail { color: red; font-weight: bold; }
-
-    .small { font-size: 13px; color: #555; }
-
+    .badge.pass { background: rgba(98,214,160,0.15); color: var(--ok); }
+    .badge.fail { background: rgba(255,107,122,0.15); color: var(--bad); }
+    .empty { color: var(--muted); text-align: center; padding: 30px; }
+    canvas { max-height: 260px; }
   </style>
 </head>
-
 <body>
 
-<h1>Dashboard — Tests API Frankfurter</h1>
+<header>
+  <h1>📊 Dashboard — Tests API Frankfurter</h1>
+  <div class="nav">
+    <a href="/" class="btn">📋 Consignes</a>
+    <a href="/run" class="btn">▶️ Lancer un run</a>
+    <a href="/health" class="btn">💚 Health</a>
+    <a href="/dashboard-json" class="btn">⬇️ Export JSON</a>
+  </div>
+</header>
 
-{% if last_run %}
-<div class="card">
+<div class="container">
 
-  <h2>Dernier run</h2>
+  {% if last_run %}
+  <!-- KPIs du dernier run -->
+  <div class="card">
+    <h2>Dernier run — <span style="color:var(--muted); font-size:14px;">{{ last_run.timestamp }}</span></h2>
+    <div class="kpi">
+      <div class="kpi-box">
+        <div class="val ok">{{ last_run.passed }}</div>
+        <div class="lbl">Tests passés</div>
+      </div>
+      <div class="kpi-box">
+        <div class="val {% if last_run.failed > 0 %}bad{% else %}ok{% endif %}">{{ last_run.failed }}</div>
+        <div class="lbl">Tests échoués</div>
+      </div>
+      <div class="kpi-box">
+        <div class="val {% if last_run.error_rate > 0.2 %}bad{% elif last_run.error_rate > 0 %}warn{% else %}ok{% endif %}">
+          {{ (last_run.error_rate * 100)|round(1) }}%
+        </div>
+        <div class="lbl">Error rate</div>
+      </div>
+      <div class="kpi-box">
+        <div class="val">{{ last_run.latency_ms_avg }} ms</div>
+        <div class="lbl">Latence avg</div>
+      </div>
+      <div class="kpi-box">
+        <div class="val warn">{{ last_run.latency_ms_p95 }} ms</div>
+        <div class="lbl">Latence p95</div>
+      </div>
+      <div class="kpi-box">
+        <div class="val {% if last_run.availability >= 80 %}ok{% else %}bad{% endif %}">
+          {{ last_run.availability }}%
+        </div>
+        <div class="lbl">Disponibilité</div>
+      </div>
+    </div>
+  </div>
 
-  <p><b>Date :</b> {{ last_run.timestamp }}</p>
-  <p><b>Passés :</b> {{ last_run.passed }} | <b>Échoués :</b> {{ last_run.failed }}</p>
-  <p><b>Error rate :</b> {{ last_run.error_rate }}</p>
-  <p><b>Latence moyenne :</b> {{ last_run.latency_ms_avg }} ms</p>
-  <p><b>Latence p95 :</b> {{ last_run.latency_ms_p95 }} ms</p>
-  <p><b>Disponibilité :</b> {{ last_run.availability }}%</p>
+  <!-- Détail des tests du dernier run -->
+  <div class="card">
+    <h2>Détail des tests</h2>
+    <table>
+      <thead>
+        <tr><th>Test</th><th>Statut</th><th>Latence</th><th>Détails</th></tr>
+      </thead>
+      <tbody>
+        {% for test in last_run.tests %}
+        <tr>
+          <td>{{ test.name }}</td>
+          <td><span class="badge {{ test.status|lower }}">{{ test.status }}</span></td>
+          <td>{% if test.latency_ms %}{{ test.latency_ms }} ms{% else %}—{% endif %}</td>
+          <td style="color:var(--muted); font-size:12px;">{{ test.details if test.details else '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="card">
+    <p class="empty">Aucun run disponible. <a href="/run">Lancez votre premier run ▶️</a></p>
+  </div>
+  {% endif %}
 
-  <h3>Détail des tests</h3>
+  <!-- Graphiques QoS -->
+  <div class="card">
+    <h2>Visualisation QoS — Historique</h2>
+    <canvas id="latencyChart"></canvas>
+  </div>
 
-  <table>
-    <tr>
-      <th>Test</th>
-      <th>Statut</th>
-      <th>Latence</th>
-      <th>Détails</th>
-    </tr>
+  <div class="card">
+    <h2>Taux d'erreur — Historique</h2>
+    <canvas id="errorChart"></canvas>
+  </div>
 
-    {% for test in last_run.payload.tests %}
-
-    <tr>
-      <td>{{ test.name }}</td>
-
-      <td class="{% if test.status == 'PASS' %}pass{% else %}fail{% endif %}">
-        {{ test.status }}
-      </td>
-
-      <td>
-        {% if test.latency_ms %}
-          {{ test.latency_ms }} ms
-        {% else %}
-          -
-        {% endif %}
-      </td>
-
-      <td>{{ test.details }}</td>
-
-    </tr>
-
-    {% endfor %}
-
-  </table>
+  <!-- Tableau historique -->
+  <div class="card">
+    <h2>Historique des runs</h2>
+    {% if runs %}
+    <table>
+      <thead>
+        <tr>
+          <th>#</th><th>Date</th><th>Passés</th><th>Échoués</th>
+          <th>Error rate</th><th>Lat. avg</th><th>Lat. p95</th><th>Dispo</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for run in runs %}
+        <tr>
+          <td>{{ run.id }}</td>
+          <td style="font-size:12px;">{{ run.timestamp }}</td>
+          <td class="pass">{{ run.passed }}</td>
+          <td class="{% if run.failed > 0 %}fail{% else %}pass{% endif %}">{{ run.failed }}</td>
+          <td>{{ (run.error_rate * 100)|round(1) }}%</td>
+          <td>{{ run.latency_ms_avg }} ms</td>
+          <td>{{ run.latency_ms_p95 }} ms</td>
+          <td>{{ run.availability }}%</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="empty">Aucun run dans l'historique.</p>
+    {% endif %}
+  </div>
 
 </div>
-{% endif %}
 
+<script>
+async function loadCharts() {
+  try {
+    const res = await fetch("/dashboard-json");
+    const data = await res.json();
+    if (!data || data.length === 0) return;
 
-<div class="card">
+    // On inverse pour avoir le plus ancien en premier
+    const sorted = [...data].reverse();
+    const labels = sorted.map(r => r.timestamp ? r.timestamp.slice(0, 16).replace("T", " ") : "");
+    const latency = sorted.map(r => r.latency_ms_avg || 0);
+    const p95 = sorted.map(r => r.latency_ms_p95 || 0);
+    const errorRate = sorted.map(r => (r.error_rate || 0) * 100);
 
-  <h2>Historique des runs</h2>
+    const commonOptions = {
+      responsive: true,
+      plugins: { legend: { labels: { color: "#e9edff" } } },
+      scales: {
+        x: { ticks: { color: "#aab4d4", maxRotation: 45 }, grid: { color: "rgba(255,255,255,0.05)" } },
+        y: { ticks: { color: "#aab4d4" }, grid: { color: "rgba(255,255,255,0.05)" } }
+      }
+    };
 
-  <table>
-    <tr>
-      <th>ID</th>
-      <th>Date</th>
-      <th>Passés</th>
-      <th>Échoués</th>
-      <th>Error rate</th>
-      <th>Latence avg</th>
-      <th>Latence p95</th>
-      <th>Disponibilité</th>
-    </tr>
+    new Chart(document.getElementById("latencyChart"), {
+      type: "line",
+      data: {
+        labels,
+        datasets: [
+          { label: "Latence avg (ms)", data: latency, borderColor: "#77baff", backgroundColor: "rgba(119,186,255,0.1)", tension: 0.3, fill: true },
+          { label: "Latence p95 (ms)", data: p95, borderColor: "#ffcc66", backgroundColor: "rgba(255,204,102,0.1)", tension: 0.3, fill: false, borderDash: [5,5] }
+        ]
+      },
+      options: commonOptions
+    });
 
-    {% for run in runs %}
+    new Chart(document.getElementById("errorChart"), {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [{
+          label: "Taux d'erreur (%)",
+          data: errorRate,
+          backgroundColor: errorRate.map(v => v > 20 ? "rgba(255,107,122,0.7)" : "rgba(98,214,160,0.7)")
+        }]
+      },
+      options: { ...commonOptions, scales: { ...commonOptions.scales, y: { ...commonOptions.scales.y, max: 100 } } }
+    });
 
-    <tr>
-      <td>{{ run.id }}</td>
-      <td>{{ run.timestamp }}</td>
-      <td>{{ run.passed }}</td>
-      <td>{{ run.failed }}</td>
-      <td>{{ run.error_rate }}</td>
-      <td>{{ run.latency_ms_avg }} ms</td>
-      <td>{{ run.latency_ms_p95 }} ms</td>
-      <td>{{ run.availability }}%</td>
-    </tr>
+  } catch(e) {
+    console.warn("Impossible de charger les données :", e);
+  }
+}
 
-    {% endfor %}
-
-  </table>
-
-</div>
+loadCharts();
+</script>
 
 </body>
 </html>
